@@ -26,7 +26,20 @@ class AAstroneerApexCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 
+
+
+	// hoover
+	UPROPERTY(Category = HooverSettings, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	class UBoxComponent* ChunkDetructorCollisonComp;
+
+	FHitResult WeaponTrace(const FVector& TraceFrom, const FVector& TraceTo) const;
+
 	bool DestroyDestructibleChunk(UDestructibleComponent* DestructibleComp, int32 HitItem);
+
+	FTimerHandle TimerHandle_Hoover;
+
+
+	// fire
 public:
 	AAstroneerApexCharacter();
 

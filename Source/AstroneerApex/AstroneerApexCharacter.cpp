@@ -64,6 +64,17 @@ AAstroneerApexCharacter::AAstroneerApexCharacter()
 	FP_MuzzleLocation->SetupAttachment(FP_Gun);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
 
+
+	// collision component to destroy apex chuncks
+	ChunkDetructorCollisonComp = CreateDefaultSubobject<UBoxComponent>(TEXT("ChunkDetructorCollisonComp"));
+	ChunkDetructorCollisonComp->SetupAttachment(FP_MuzzleLocation);
+	ChunkDetructorCollisonComp->SetCollisionProfileName("ChunkDetructorCollisonCompProfile");
+	ChunkDetructorCollisonComp->SetSimulatePhysics(false);
+
+
+
+
+
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(100.0f, 30.0f, 10.0f);
 
@@ -111,6 +122,8 @@ void AAstroneerApexCharacter::SetupPlayerInputComponent(class UInputComponent* P
 
 void AAstroneerApexCharacter::OnFire()
 {
+	
+
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
@@ -122,7 +135,30 @@ void AAstroneerApexCharacter::OnFire()
 			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 
 			// spawn the projectile at the muzzle
-			World->SpawnActor<AAstroneerApexProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+			//World->SpawnActor<AAstroneerApexProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+
+			// debug line - from weapon location to aim point
+			//DrawDebugLine(
+			//	GetWorld(),
+			//	SpawnLocation,
+			//	SpawnLocation + SpawnRotation.Vector() * 20000.f,
+			//	FColor(0, 255, 0),
+			//	true, -1, 0,
+			//	12.333
+			//);
+
+			FHitResult Hit = WeaponTrace(SpawnLocation, SpawnLocation + SpawnRotation.Vector() * 20000.f);
+			if (Hit.bBlockingHit)
+			{
+				DrawDebugPoint(
+					GetWorld(),
+					Hit.Location,
+					10.f,
+					FColor(255, 0, 0),
+					true
+				);
+			}
+			
 		}
 	}
 
@@ -142,6 +178,11 @@ void AAstroneerApexCharacter::OnFire()
 			AnimInstance->Montage_Play(FireAnimation, 1.f);
 		}
 	}
+
+
+
+
+
 }
 
 void AAstroneerApexCharacter::MoveForward(float Value)
@@ -172,6 +213,18 @@ void AAstroneerApexCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+FHitResult AAstroneerApexCharacter::WeaponTrace(const FVector& TraceFrom, const FVector& TraceTo) const
+{
+	FCollisionQueryParams TraceParams(TEXT("WeaponTrace"), true, Instigator);
+	TraceParams.bTraceAsyncScene = true;
+	TraceParams.bReturnPhysicalMaterial = true;
+
+	FHitResult Hit(ForceInit);
+	GetWorld()->LineTraceSingleByChannel(Hit, TraceFrom, TraceTo, COLLISION_WEAPON, TraceParams);
+
+	return Hit;
 }
 
 bool AAstroneerApexCharacter::DestroyDestructibleChunk(UDestructibleComponent* DestructibleComp, int32 HitItem)
