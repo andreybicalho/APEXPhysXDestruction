@@ -38,6 +38,12 @@ class AAstroneerApexCharacter : public ACharacter
 
 	FTimerHandle TimerHandle_Hoover;
 
+	UPROPERTY(Category = HooverSettings, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	float HooverSpeed;
+
+	UPROPERTY(Category = HooverSettings, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	int32 MaxNumberOfHooverLazers;
+
 
 	// fire
 public:
@@ -73,6 +79,13 @@ protected:
 	
 	/** Fires a projectile. */
 	void OnFire();
+
+	/** Start Hoover. */
+	void OnHoover();
+
+	void HooverOff();
+
+	void DoHoover();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

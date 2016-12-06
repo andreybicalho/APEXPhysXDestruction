@@ -71,7 +71,8 @@ AAstroneerApexCharacter::AAstroneerApexCharacter()
 	ChunkDetructorCollisonComp->SetCollisionProfileName("ChunkDetructorCollisonCompProfile");
 	ChunkDetructorCollisonComp->SetSimulatePhysics(false);
 
-
+	HooverSpeed = 0.5f;
+	MaxNumberOfHooverLazers = 2;
 
 
 
@@ -107,6 +108,8 @@ void AAstroneerApexCharacter::SetupPlayerInputComponent(class UInputComponent* P
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AAstroneerApexCharacter::OnFire);
+	PlayerInputComponent->BindAction("Hoover", IE_Pressed, this, &AAstroneerApexCharacter::OnHoover);
+	PlayerInputComponent->BindAction("Hoover", IE_Released, this, &AAstroneerApexCharacter::HooverOff);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AAstroneerApexCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AAstroneerApexCharacter::MoveRight);
@@ -157,6 +160,12 @@ void AAstroneerApexCharacter::OnFire()
 					FColor(255, 0, 0),
 					true
 				);
+
+				UDestructibleComponent* DestructibleActorComponent = Cast<UDestructibleComponent>(Hit.GetComponent());
+				if (DestructibleActorComponent)
+				{
+					DestructibleActorComponent->ApplyDamage(1.f, Hit.Location, GetActorForwardVector(), 1.f);
+				}
 			}
 			
 		}
@@ -183,6 +192,66 @@ void AAstroneerApexCharacter::OnFire()
 
 
 
+}
+
+void AAstroneerApexCharacter::OnHoover()
+{
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Hoover, this, &AAstroneerApexCharacter::DoHoover, HooverSpeed, true);	
+}
+
+void AAstroneerApexCharacter::DoHoover()
+{
+	const FRotator Rotation = GetControlRotation();
+	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+	const FVector Location = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + Rotation.Vector();
+
+
+	// debug line - from weapon location to aim point
+	/*DrawDebugLine(
+		GetWorld(),
+		Location,
+		Location + Rotation.Vector() * 20000.f,
+		FColor(255, 0, 0),
+		false, 0.1, 0,
+		10.f
+	);	*/
+
+
+	for (int LazerCount = 0; LazerCount < MaxNumberOfHooverLazers; LazerCount++)
+	{
+		//FVector NewLocation = FMath::VRandCone(Rotation.Vector(), FMath::DegreesToRadians(3.0f));
+
+		FVector NormalizedNewLocation = FMath::VRandCone(Location + Rotation.Vector() * 30000.f, FMath::DegreesToRadians(3.f));
+		FVector NewLocation = NormalizedNewLocation * 30000.f;
+		
+
+		DrawDebugLine(
+			GetWorld(),
+			Location,
+			NewLocation,
+			FColor(255, 0, 0),
+			false, 0.1, 0,
+			10.f
+		);
+
+		FHitResult Hit = WeaponTrace(Location, NewLocation);
+		if (Hit.bBlockingHit)
+		{
+			UDestructibleComponent* DestructibleActorComponent = Cast<UDestructibleComponent>(Hit.GetComponent());
+			if (DestructibleActorComponent)
+			{
+				//DestructibleActorComponent->ApplyDamage(1.f, Hit.Location, GetActorForwardVector(), 1.f);
+
+				DestroyDestructibleChunk(DestructibleActorComponent, Hit.Item);
+			}
+		}
+	}
+	
+}
+
+void AAstroneerApexCharacter::HooverOff()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_Hoover);
 }
 
 void AAstroneerApexCharacter::MoveForward(float Value)
