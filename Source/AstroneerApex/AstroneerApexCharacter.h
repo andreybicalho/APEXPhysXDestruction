@@ -44,6 +44,22 @@ class AAstroneerApexCharacter : public ACharacter
 	UPROPERTY(Category = HooverSettings, EditDefaultsOnly, meta = (AllowPrivateAccess = "true"))
 	int32 MaxNumberOfHooverLazers;
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StartHoover();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_StopHoover();
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_Fire();
+
+	void StartSimulateHoover();
+
+	void StopSimulateHoover();
+
+	void SimulateHoover();
+
+	void SimulateFire();
 
 	// fire
 public:
@@ -77,6 +93,12 @@ public:
 
 protected:
 	
+	void StartFire();
+
+	void StartHoover();
+
+	void StopHoover();
+
 	/** Fires a projectile. */
 	void OnFire();
 

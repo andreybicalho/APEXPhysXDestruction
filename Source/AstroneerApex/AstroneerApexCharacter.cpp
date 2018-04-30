@@ -107,9 +107,9 @@ void AAstroneerApexCharacter::SetupPlayerInputComponent(class UInputComponent* P
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AAstroneerApexCharacter::OnFire);
-	PlayerInputComponent->BindAction("Hoover", IE_Pressed, this, &AAstroneerApexCharacter::OnHoover);
-	PlayerInputComponent->BindAction("Hoover", IE_Released, this, &AAstroneerApexCharacter::HooverOff);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AAstroneerApexCharacter::StartFire);
+	PlayerInputComponent->BindAction("Hoover", IE_Pressed, this, &AAstroneerApexCharacter::StartHoover);
+	PlayerInputComponent->BindAction("Hoover", IE_Released, this, &AAstroneerApexCharacter::StopHoover);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AAstroneerApexCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AAstroneerApexCharacter::MoveRight);
@@ -153,7 +153,7 @@ void AAstroneerApexCharacter::OnFire()
 			FHitResult Hit = WeaponTrace(SpawnLocation, SpawnLocation + SpawnRotation.Vector() * 20000.f);
 			if (Hit.bBlockingHit)
 			{
-				DrawDebugPoint(
+				/*DrawDebugPoint(
 					GetWorld(),
 					Hit.Location,
 					10.f,
@@ -164,8 +164,20 @@ void AAstroneerApexCharacter::OnFire()
 				UDestructibleComponent* DestructibleActorComponent = Cast<UDestructibleComponent>(Hit.GetComponent());
 				if (DestructibleActorComponent)
 				{
-					DestructibleActorComponent->ApplyDamage(1.f, Hit.Location, GetActorForwardVector(), 1.f);
+					DestructibleActorComponent->ApplyDamage(1.f, Hit.Location, GetActorForwardVector(), 1.f);				
+				}*/
+
+				FPointDamageEvent DamageEvent;
+				DamageEvent.HitInfo = Hit;
+				DamageEvent.DamageTypeClass = UDamageType::StaticClass();
+
+				AActor* hitActor = Cast<AActor>(Hit.GetActor());
+				if (hitActor)
+				{
+					hitActor->TakeDamage(1.f, DamageEvent, this->GetController(), this);
 				}
+
+
 			}
 			
 		}
@@ -335,4 +347,129 @@ bool AAstroneerApexCharacter::DestroyDestructibleChunk(UDestructibleComponent* D
 
 	UE_LOG(LogTemp, Error, TEXT("AMyPawn::DestroyDestructibleChunk ~ Current Platform does not support APEX"));
 	return false;
+}
+
+void AAstroneerApexCharacter::StartFire()
+{
+	if (HasAuthority())
+	{
+		OnFire();
+	}
+	else 
+	{
+		Server_Fire();
+		SimulateFire();
+	}	
+}
+
+void AAstroneerApexCharacter::StartHoover()
+{
+	if (HasAuthority())
+	{
+		OnHoover();
+	}
+	else
+	{
+		StartSimulateHoover();
+		Server_StartHoover();		
+	}
+}
+
+void AAstroneerApexCharacter::StopHoover()
+{
+	if (HasAuthority())
+	{
+		HooverOff();
+	}
+	else
+	{
+		Server_StopHoover();
+		StopSimulateHoover();
+	}
+}
+
+bool AAstroneerApexCharacter::Server_StartHoover_Validate()
+{
+	return true;
+}
+
+void AAstroneerApexCharacter::Server_StartHoover_Implementation()
+{
+	StartHoover();
+}
+
+bool AAstroneerApexCharacter::Server_StopHoover_Validate()
+{
+	return true;
+}
+
+void AAstroneerApexCharacter::Server_StopHoover_Implementation()
+{
+	StopHoover();
+}
+
+bool AAstroneerApexCharacter::Server_Fire_Validate()
+{
+	return true;
+}
+
+void AAstroneerApexCharacter::Server_Fire_Implementation()
+{
+	StartFire();
+}
+
+void AAstroneerApexCharacter::SimulateHoover()
+{
+	const FRotator Rotation = GetControlRotation();
+	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+	const FVector Location = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + Rotation.Vector();
+
+	for (int LazerCount = 0; LazerCount < MaxNumberOfHooverLazers; LazerCount++)
+	{
+		//FVector NewLocation = FMath::VRandCone(Rotation.Vector(), FMath::DegreesToRadians(3.0f));
+
+		FVector NormalizedNewLocation = FMath::VRandCone(Location + Rotation.Vector() * 30000.f, FMath::DegreesToRadians(3.f));
+		FVector NewLocation = NormalizedNewLocation * 30000.f;
+
+
+		DrawDebugLine(
+			GetWorld(),
+			Location,
+			NewLocation,
+			FColor(255, 0, 0),
+			false, 0.1, 0,
+			10.f
+		);
+	}
+
+}
+
+void AAstroneerApexCharacter::StartSimulateHoover()
+{
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Hoover, this, &AAstroneerApexCharacter::SimulateHoover, HooverSpeed, true);
+}
+
+void AAstroneerApexCharacter::StopSimulateHoover()
+{
+	HooverOff();
+}
+
+void AAstroneerApexCharacter::SimulateFire()
+{
+	// try and play the sound if specified
+	if (FireSound != NULL)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+	}
+
+	// try and play a firing animation if specified
+	if (FireAnimation != NULL)
+	{
+		// Get the animation object for the arms mesh
+		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+		if (AnimInstance != NULL)
+		{
+			AnimInstance->Montage_Play(FireAnimation, 1.f);
+		}
+	}
 }
