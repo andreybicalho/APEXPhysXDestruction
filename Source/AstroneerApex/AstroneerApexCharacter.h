@@ -34,7 +34,7 @@ class AAstroneerApexCharacter : public ACharacter
 
 	FHitResult WeaponTrace(const FVector& TraceFrom, const FVector& TraceTo) const;
 
-	bool DestroyDestructibleChunk(UDestructibleComponent* DestructibleComp, int32 HitItem);
+	bool DestroyDestructibleChunk(class UDestructibleComponent* DestructibleComp, int32 HitItem);
 
 	FTimerHandle TimerHandle_Hoover;
 

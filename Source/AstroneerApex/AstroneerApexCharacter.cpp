@@ -1,15 +1,22 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 
-#include "AstroneerApex.h"
 #include "AstroneerApexCharacter.h"
+#include "AstroneerApex.h"
 #include "AstroneerApexProjectile.h"
+
 #include "Animation/AnimInstance.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"
 #include "MotionControllerComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Public/DrawDebugHelpers.h"
+#include "Camera/CameraComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/DestructibleComponent.h"
 
-//Apex issues, can add iOS here  <3 Rama
-#if PLATFORM_ANDROID || PLATFORM_HTML5_BROWSER || PLATFORM_IOS
+//Apex issues
+#if PLATFORM_ANDROID || PLATFORM_IOS
 #ifdef WITH_APEX
 #undef WITH_APEX
 #endif

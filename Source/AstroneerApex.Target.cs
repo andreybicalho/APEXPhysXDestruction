@@ -5,21 +5,10 @@ using System.Collections.Generic;
 
 public class AstroneerApexTarget : TargetRules
 {
-	public AstroneerApexTarget(TargetInfo Target)
-	{
+	public AstroneerApexTarget(TargetInfo Target) : base(Target)
+    {
 		Type = TargetType.Game;
-	}
 
-	//
-	// TargetRules interface.
-	//
-
-	public override void SetupBinaries(
-		TargetInfo Target,
-		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
-		ref List<string> OutExtraModuleNames
-		)
-	{
-		OutExtraModuleNames.Add("AstroneerApex");
-	}
+        ExtraModuleNames.AddRange(new string[] { "AstroneerApex" });
+    }
 }

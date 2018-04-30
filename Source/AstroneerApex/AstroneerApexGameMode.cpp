@@ -1,12 +1,12 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 
-#include "AstroneerApex.h"
 #include "AstroneerApexGameMode.h"
+#include "AstroneerApex.h"
 #include "AstroneerApexHUD.h"
 #include "AstroneerApexCharacter.h"
+#include "UObject/ConstructorHelpers.h"
 
-AAstroneerApexGameMode::AAstroneerApexGameMode()
-	: Super()
+AAstroneerApexGameMode::AAstroneerApexGameMode() : Super()
 {
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/FirstPersonCPP/Blueprints/FirstPersonCharacter"));

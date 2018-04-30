@@ -1,8 +1,9 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 
-#include "AstroneerApex.h"
 #include "AstroneerApexProjectile.h"
+#include "AstroneerApex.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/SphereComponent.h"
 
 AAstroneerApexProjectile::AAstroneerApexProjectile() 
 {

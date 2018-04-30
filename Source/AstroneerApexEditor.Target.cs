@@ -5,21 +5,10 @@ using System.Collections.Generic;
 
 public class AstroneerApexEditorTarget : TargetRules
 {
-	public AstroneerApexEditorTarget(TargetInfo Target)
-	{
+	public AstroneerApexEditorTarget(TargetInfo Target) : base(Target)
+    {
 		Type = TargetType.Editor;
-	}
 
-	//
-	// TargetRules interface.
-	//
-
-	public override void SetupBinaries(
-		TargetInfo Target,
-		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
-		ref List<string> OutExtraModuleNames
-		)
-	{
-		OutExtraModuleNames.Add("AstroneerApex");
-	}
+        ExtraModuleNames.AddRange(new string[] { "AstroneerApex" });
+    }
 }
